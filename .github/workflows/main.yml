@@ -31,6 +31,8 @@ jobs:
           python zg.py
           python mg.py
           python wh.py
+          python agd.py
+          python agx.py
           echo "所有报告生成完毕！"
 
       - name: Deploy to GitHub Pages
