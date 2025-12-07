@@ -384,7 +384,8 @@ def generate_html_table(df, title):
     html = df_display.to_html(classes='styled-table', escape=False, border=0, justify='center', formatters=formatters)
     return f"<h2>{title}</h2>\n{html}"
 
-def create_html_report(all_html_sections, filename="美股深度分析报告.html"):
+def create_html_report(all_html_sections, filename="mg.html"):
+
     css = """<style>
         body{font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:2rem;background:#f0f2f5;color:#333}
         h1{text-align:center;color:#1a73e8;border-bottom:3px solid #1a73e8;padding-bottom:10px}
@@ -458,3 +459,4 @@ if __name__ == '__main__':
         create_html_report(html_sections)
     else:
         print("数据不足，无法生成。")
+
