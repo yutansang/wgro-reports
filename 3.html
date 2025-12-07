@@ -1,0 +1,492 @@
+<!DOCTYPE html><html><head><meta charset='UTF-8'><title>A股深度报告(完全体)</title><style>
+        body{font-family:"Microsoft YaHei",sans-serif;padding:2rem;background:#f4f6f9;color:#333}
+        h1{text-align:center;color:#d93025;border-bottom:3px solid #d93025;padding-bottom:10px} 
+        h2{color:#333;border-left:5px solid #d93025;padding-left:10px;margin-top:30px;background:#fff;padding:15px;border-radius:5px;}
+        h3{color:#d93025;margin-top:25px} h4{font-size:1.1em; font-weight:bold;}
+        .container{max-width:1300px;margin:auto;background:#fff;padding:40px;border-radius:12px;box-shadow:0 6px 15px rgba(0,0,0,.08)}
+        .styled-table, .pivot-table{width:100%;border-collapse:collapse;margin:20px 0;}
+        .styled-table th, .pivot-table th{background:#d93025;color:#fff;padding:12px;text-align:center}
+        .styled-table td, .pivot-table td{padding:10px;border-bottom:1px solid #eee;text-align:center}
+        .styled-table tr:hover, .pivot-table tr:hover{background-color:#f1f1f1}
+        li{margin-bottom:8px; line-height:1.6;} b{font-weight:700;color:#000}
+    </style></head><body><div class='container'><h1>🇨🇳 A股全景交易决策看板 (v5.3 动态配置版)</h1><p style='text-align:center;color:#888'>数据源: BaoStock | 生成时间: 2025-12-07 15:45:14</p><h2>🐉 A股情绪全景 (Market Sentiment)</h2>
+    <div style='text-align:center; margin:20px 0; padding:20px; background:#fff; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.05);'>
+        <div style='font-size:1.5em;'>市场热度: <strong style='color:#6c757d;'>震荡 (Neutral)</strong></div>
+        <div style='font-size:3.5em; font-weight:bold; margin:15px 0; color:#6c757d'>-0.11</div>
+        <div style='width:80%; margin:auto; background-color:#e9ecef; border-radius:10px; height:25px; position:relative;'>
+            <div style='height:100%; width:2px; background-color:#343a40; position:absolute; left:50%;'></div>
+            <div style='height:25px; width:25px; background-color:#6c757d; border:3px solid #fff; border-radius:50%; position:absolute; top:0; left:calc(49.4447176054318% - 12.5px);'></div>
+        </div>
+        <p style='margin-top:15px; font-size:0.9em; color:#666;'>成长(-0.04) | 题材(-0.19) | 旗手(0.00)</p>
+    </div><h2>📊 板块动能雷达</h2><table class='pivot-table'><thead><tr><th>板块分组</th><th>长期趋势(60d)</th><th>短期趋势(5d)</th><th>动能加速度</th><th>状态</th></tr></thead><tbody><tr><td style='text-align:left;font-weight:bold;'>核心宽基</td><td>0.01</td><td>0.09</td><td><span style='color:#d93025'>0.57</span></td><td><b>📈 进攻</b></td></tr></tbody></table><h2>🧠 深度洞察 (AI Narrative)</h2><h3 style='margin-top:30px; border-bottom: 2px solid #eee; padding-bottom:10px;'>数据深度解读：正反逻辑链</h3><div style='background-color:#f8f9fa; padding:20px; border-radius:8px; border-left: 5px solid #0056b3;'><div style='margin-bottom:20px;'><h4 style='color:#ffc107; margin:0;'>⚠️ 高位预警 (减仓/止盈)</h4><p><b>标的案例：中矿资源（锂矿/铯铷）</b></p><ul><li><b>【数据真相】</b>: 长期Alpha依然很高 <b>2.12</b>，但加速度已崩塌至 <b style='color:#28a745'>-1.74</b>。</li><li><b>【逻辑判断】</b>: 这是典型的<b>'强弩之末'</b>。上涨动能衰竭，资金正在撤退，<b>获利了结</b>信号明显。</li><li><b>【操作对策】</b>: <b style='color:#ffc107'>坚决止盈</b>。不要迷恋过去的辉煌，不要去吃最后的一个铜板。</li></ul></div><div style='margin-bottom:20px;'><h4 style='color:#17a2b8; margin:0;'>⚡ 超跌反弹 (博弈/短线)</h4><p><b>标的案例：正泰电器（光伏电站/低压电器）</b></p><ul><li><b>【数据真相】</b>: 长期Alpha还在水下 <b>-3.04</b>，但加速度异军突起 <b style='color:#d93025'>+3.23</b>。</li><li><b>【逻辑判断】</b>: <b>'困境反转'</b>的首选。跌得太久了，主力资金开始猛烈回补。</li><li><b>【操作对策】</b>: <b style='color:#17a2b8'>右侧试错</b>。适合短线快进快出，一旦加速度转弱立即离场。</li></ul></div><div><h4 style='color:#28a745; margin:0;'>❌ 深不见底 (回避)</h4><p><b>标的案例：长安汽车（新能源车）</b></p><ul><li><b>【数据真相】</b>: Alpha深绿 <b>-1.08</b>，且加速度还在负值区间 <b style='color:#28a745'>-0.56</b>。</li><li><b>【逻辑判断】</b>: <b>'阴跌不止'</b>。不要轻易抄底，飞刀还没落地。</li><li><b>【操作对策】</b>: <b style='color:#28a745'>坚决远离</b>。这类股票是账户亏损的主要来源。</li></ul></div></div><h2>🏆 核心个股排名 (vs 沪深300) - yuconfig_3.json</h2>
+<table class="dataframe styled-table">
+  <thead>
+    <tr style="text-align: center;">
+      <th></th>
+      <th>综合大师分 (Alpha)</th>
+      <th>加权相对Z值</th>
+      <th>60日相对趋势</th>
+      <th>20日相对趋势</th>
+      <th>5日相对趋势</th>
+      <th>动能加速度</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>万华化学（锂电材料/MDI）</th>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">3.37</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.06</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.76</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.68</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">1.00</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.68</span></td>
+    </tr>
+    <tr>
+      <th>恩捷股份（锂电隔膜）</th>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">2.61</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.76</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">2.56</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.83</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.19</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.02</span></td>
+    </tr>
+    <tr>
+      <th>中矿资源（锂矿/铯铷）</th>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">2.12</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.37</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">2.39</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.27</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.47</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.74</span></td>
+    </tr>
+    <tr>
+      <th>迈为股份（光伏异质结设备）</th>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.93</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.38</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.55</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.35</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.41</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.94</span></td>
+    </tr>
+    <tr>
+      <th>盛新锂能（锂矿/锂盐）</th>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.69</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.28</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">2.29</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.58</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-2.67</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-3.25</span></td>
+    </tr>
+    <tr>
+      <th>特变电工（光伏硅料/特高压）</th>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.64</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.01</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">2.68</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.93</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.16</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.77</span></td>
+    </tr>
+    <tr>
+      <th>金风科技（风电整机）</th>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.57</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.90</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.74</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.55</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.23</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.78</span></td>
+    </tr>
+    <tr>
+      <th>宁德时代（动力电池）</th>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.21</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.56</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.01</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.35</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.55</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.90</span></td>
+    </tr>
+    <tr>
+      <th>华友钴业（钴/镍资源）</th>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.08</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.68</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.19</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.18</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.14</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.31</span></td>
+    </tr>
+    <tr>
+      <th>星源材质（锂电隔膜）</th>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.02</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.67</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.01</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.30</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.25</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.55</span></td>
+    </tr>
+    <tr>
+      <th>杉杉股份（锂电材料/偏光片）</th>
+      <td><span style="color: #d93025; font-weight: bold;">0.95</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.59</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.63</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.45</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.75</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.31</span></td>
+    </tr>
+    <tr>
+      <th>上机数控（光伏硅片/设备）</th>
+      <td><span style="color: #d93025; font-weight: bold;">0.81</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.56</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.19</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.38</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.39</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.01</span></td>
+    </tr>
+    <tr>
+      <th>赣锋锂业（锂盐加工/固态电池）</th>
+      <td><span style="color: #d93025; font-weight: bold;">0.59</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.43</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.48</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.19</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.09</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.10</span></td>
+    </tr>
+    <tr>
+      <th>天顺风能（风电塔筒）</th>
+      <td><span style="color: #d93025; font-weight: bold;">0.57</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.20</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.37</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.07</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.02</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.06</span></td>
+    </tr>
+    <tr>
+      <th>锦富技术（光伏辅材）</th>
+      <td><span style="color: #d93025; font-weight: bold;">0.54</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.42</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.04</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.59</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.26</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.33</span></td>
+    </tr>
+    <tr>
+      <th>阳光电源（光伏逆变器/储能）</th>
+      <td><span style="color: #d93025; font-weight: bold;">0.37</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.29</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.98</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.87</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.42</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.45</span></td>
+    </tr>
+    <tr>
+      <th>科达利（锂电结构件）</th>
+      <td><span style="color: #d93025; font-weight: bold;">0.28</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.16</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.35</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.18</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.06</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.24</span></td>
+    </tr>
+    <tr>
+      <th>中环股份（光伏硅片）</th>
+      <td><span style="color: #d93025; font-weight: bold;">0.22</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.11</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.75</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.77</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.07</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.30</span></td>
+    </tr>
+    <tr>
+      <th>拓普集团（新能源车底盘）</th>
+      <td><span style="color: #d93025; font-weight: bold;">0.19</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.11</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.01</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.08</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.95</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.87</span></td>
+    </tr>
+    <tr>
+      <th>天齐锂业（锂矿）</th>
+      <td><span style="color: #d93025; font-weight: bold;">0.15</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.10</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.79</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.74</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.51</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.77</span></td>
+    </tr>
+    <tr>
+      <th>容百科技（正极材料）</th>
+      <td><span style="color: #d93025; font-weight: bold;">0.04</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.03</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.34</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.15</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.27</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.12</span></td>
+    </tr>
+    <tr>
+      <th>德方纳米（磷酸铁锂正极）</th>
+      <td><span style="color: #d93025; font-weight: bold;">0.01</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.00</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.64</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.93</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.98</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.05</span></td>
+    </tr>
+    <tr>
+      <th>璞泰来（负极材料）</th>
+      <td><span style="color: #28a745; font-weight: bold;">-0.24</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.13</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.26</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.83</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.34</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.49</span></td>
+    </tr>
+    <tr>
+      <th>新宙邦（电解液）</th>
+      <td><span style="color: #28a745; font-weight: bold;">-0.35</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.24</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.36</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.06</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.40</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.34</span></td>
+    </tr>
+    <tr>
+      <th>中材科技（风电叶片/玻纤）</th>
+      <td><span style="color: #28a745; font-weight: bold;">-0.36</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.24</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.30</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.22</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.11</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.33</span></td>
+    </tr>
+    <tr>
+      <th>先导智能（锂电设备）</th>
+      <td><span style="color: #28a745; font-weight: bold;">-0.47</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.37</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.29</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.53</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.40</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.12</span></td>
+    </tr>
+    <tr>
+      <th>天合光能（光伏组件）</th>
+      <td><span style="color: #28a745; font-weight: bold;">-0.92</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.54</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.16</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.77</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.12</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.65</span></td>
+    </tr>
+    <tr>
+      <th>东方电缆（海缆）</th>
+      <td><span style="color: #28a745; font-weight: bold;">-0.98</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.35</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.25</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.75</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.27</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.02</span></td>
+    </tr>
+    <tr>
+      <th>华光环能（光伏/热电）</th>
+      <td><span style="color: #28a745; font-weight: bold;">-1.00</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.64</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.90</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.05</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.88</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.83</span></td>
+    </tr>
+    <tr>
+      <th>欣旺达（动力电池/消费电池）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.01</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.69</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.03</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-2.17</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.58</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.58</span></td>
+    </tr>
+    <tr>
+      <th>三峡能源（风电/光伏运营）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.03</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.12</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.22</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.10</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.20</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.30</span></td>
+    </tr>
+    <tr>
+      <th>派能科技（储能电池）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.07</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.68</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.36</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.29</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.77</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.52</span></td>
+    </tr>
+    <tr>
+      <th>隆基绿能（光伏组件）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.08</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.50</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.25</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.90</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.87</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.03</span></td>
+    </tr>
+    <tr>
+      <th>长安汽车（新能源车）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.08</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.23</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.35</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.10</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.46</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.56</span></td>
+    </tr>
+    <tr>
+      <th>亿纬锂能（动力电池/储能电池）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.14</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.84</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.45</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.65</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.77</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.88</span></td>
+    </tr>
+    <tr>
+      <th>德赛西威（新能源车电子）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.29</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.56</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.88</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.08</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.08</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.01</span></td>
+    </tr>
+    <tr>
+      <th>通威股份（光伏硅料/电池片）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.39</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.72</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.37</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.33</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.96</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.37</span></td>
+    </tr>
+    <tr>
+      <th>格林美（电池回收/钴镍）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.47</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.67</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.16</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.74</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.51</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">1.23</span></td>
+    </tr>
+    <tr>
+      <th>爱旭股份（光伏电池片）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.64</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.82</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.78</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.04</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.45</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.58</span></td>
+    </tr>
+    <tr>
+      <th>福莱特（光伏玻璃）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.86</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.79</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.71</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.08</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.44</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.64</span></td>
+    </tr>
+    <tr>
+      <th>晶澳科技（光伏组件）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.90</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.92</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.62</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.46</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.08</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.38</span></td>
+    </tr>
+    <tr>
+      <th>国轩高科（动力电池）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-2.19</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.09</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.13</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.19</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.57</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.62</span></td>
+    </tr>
+    <tr>
+      <th>比亚迪（新能源车/动力电池）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-2.82</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.62</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-1.00</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.01</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.15</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.14</span></td>
+    </tr>
+    <tr>
+      <th>正泰电器（光伏电站/低压电器）</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-3.04</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.45</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.67</span></td>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-3.44</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.20</span></td>
+      <td><span style="background-color: #f8d7da; color: #d93025; font-weight: bold;">3.23</span></td>
+    </tr>
+  </tbody>
+</table><h2>🌍 宽基指数趋势</h2>
+<table class="dataframe styled-table">
+  <thead>
+    <tr style="text-align: center;">
+      <th></th>
+      <th>综合大师分 (Alpha)</th>
+      <th>加权相对Z值</th>
+      <th>60日相对趋势</th>
+      <th>20日相对趋势</th>
+      <th>5日相对趋势</th>
+      <th>动能加速度</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>创业板指 (成长)</th>
+      <td><span style="color: #28a745; font-weight: bold;">-0.22</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.08</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.10</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.52</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.21</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.73</span></td>
+    </tr>
+    <tr>
+      <th>中证500 (中盘)</th>
+      <td><span style="color: #28a745; font-weight: bold;">-0.67</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.14</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.04</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.61</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.16</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.76</span></td>
+    </tr>
+    <tr>
+      <th>中证1000 (小盘)</th>
+      <td><span style="color: #28a745; font-weight: bold;">-0.99</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.19</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.09</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.45</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.04</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.41</span></td>
+    </tr>
+    <tr>
+      <th>上证50 (超大盘)</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-1.71</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.20</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.12</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.53</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.30</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.83</span></td>
+    </tr>
+    <tr>
+      <th>上证指数</th>
+      <td><span style="background-color: #d4edda; color: #28a745; font-weight: bold;">-2.36</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.29</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.11</span></td>
+      <td><span style="color: #28a745; font-weight: bold;">-0.75</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.02</span></td>
+      <td><span style="color: #d93025; font-weight: bold;">0.77</span></td>
+    </tr>
+  </tbody>
+</table></div></body></html>
