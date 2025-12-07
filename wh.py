@@ -319,7 +319,8 @@ def generate_html_table(df, title):
     html = df_display.to_html(classes='styled-table', escape=False, border=0, justify='center', formatters=formatters)
     return f"<h2>{title}</h2>\n{html}"
 
-def create_html_report(all_html_sections, filename="全球宏观分析报告.html"):
+def create_html_report(all_html_sections, filename="wh.html"):
+
     css_style = """<style>
         body{font-family:"Microsoft YaHei","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;margin:0;padding:2rem;background-color:#f8f9fa;color:#212529}
         h1,h2{color:#343a40;border-bottom:2px solid #dee2e6;padding-bottom:.5rem;margin-top:2rem}
@@ -428,3 +429,4 @@ if __name__ == '__main__':
     else:
         print("\n未能下载分析所需的核心数据，无法生成报告。")
     print("\n分析完成。")
+
