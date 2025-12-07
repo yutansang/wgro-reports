@@ -1,0 +1,40 @@
+name: Generate and Deploy WGRO Reports
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '0 * * * *' # 每小时的第0分钟运行
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo Content
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.14'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install yfinance pandas numpy
+
+      - name: Run Python Scripts to Generate Reports
+        run: |
+          echo "开始生成 wgro.cn 的报告..."
+          python zg.py
+          python mg.py
+          python wh.py
+          echo "所有报告生成完毕！"
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages # 部署到 gh-pages 分支
+          folder: . # 将当前目录的所有HTML文件都部署
