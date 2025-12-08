@@ -5,6 +5,20 @@
     <title>全球市场全景导航</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- 👇👇👇 这里是新插入的 APP 核心代码 👇👇👇 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="WGRO">
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+    <!-- 👆👆👆 插入结束 👆👆👆 -->
+
     <style>
         body {
             font-family: Arial, sans-serif;
