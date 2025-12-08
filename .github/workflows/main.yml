@@ -21,7 +21,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10' # 推荐使用 3.10，最稳定
+          python-version: '3.14' # 推荐使用 3.10，最稳定
 
       - name: Install Dependencies
         run: |
@@ -60,7 +60,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.14'
 
       - name: Install Dependencies
         run: |
