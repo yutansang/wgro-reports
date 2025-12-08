@@ -1,4 +1,4 @@
-name: Parallel Generation (Fast & Slow Lanes)
+name: Ultra Parallel Generation (3 Lanes)
 
 permissions:
   contents: write
@@ -10,48 +10,9 @@ on:
 
 jobs:
   # ==================================================
-  # 🚗 快车道：运行 zg, mg, wh (几分钟搞定)
+  # 🚗 车道一：快车道 (zg, mg, wh)
   # ==================================================
   fast-lane:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.14' # 推荐使用 3.10，最稳定
-
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install yfinance pandas numpy
-          # 快脚本不需要 baostock，这里就不装了，节省时间
-
-      - name: Run Fast Scripts 🚀
-        run: |
-          echo ">>> [快车道] 开始运行快脚本..."
-          python zg.py
-          python mg.py
-          python wh.py
-          echo ">>> [快车道] 快脚本运行完毕！"
-
-      - name: Deploy Fast Reports
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages
-          folder: .
-          # 🔥 关键：只更新我生成的文件，不删除别人的文件
-          clean: false 
-          # 防止 git 锁冲突，增加一次重试
-          git-config-email: action@github.com
-          git-config-name: GitHub Action
-
-  # ==================================================
-  # 🐢 慢车道：运行 agd, agx (耗时较长)
-  # ==================================================
-  slow-lane:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -65,22 +26,91 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          # 慢脚本需要 baostock，这里专门安装
-          pip install yfinance pandas numpy baostock
+          pip install yfinance pandas numpy
+          # 快脚本不需要 baostock
 
-      - name: Run Slow Scripts 🐢
+      - name: Run Fast Scripts 🚀
         run: |
-          echo ">>> [慢车道] 开始运行慢脚本 (耗时较长，请耐心等待)..."
-          python agd.py
-          python agx.py
-          echo ">>> [慢车道] 慢脚本运行完毕！"
+          echo ">>> [快车道] 开始运行快脚本..."
+          python zg.py
+          python mg.py
+          python wh.py
+          echo ">>> [快车道] 完成！"
 
-      - name: Deploy Slow Reports
+      - name: Deploy Fast Reports
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
           folder: .
-          # 🔥 关键：同样不删除快车道生成的文件
-          clean: false 
+          clean: false # 关键：不删别人文件
+          git-config-email: action@github.com
+          git-config-name: GitHub Action
+
+  # ==================================================
+  # 🐢 车道二：慢车道 A (agd.py)
+  # ==================================================
+  slow-lane-agd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.14'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # 慢脚本需要 baostock
+          pip install yfinance pandas numpy baostock
+
+      - name: Run AGD Script 🐢
+        run: |
+          echo ">>> [慢车道A] 开始运行 agd.py..."
+          python agd.py
+          echo ">>> [慢车道A] 完成！"
+
+      - name: Deploy AGD Report
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: .
+          clean: false # 关键
+          git-config-email: action@github.com
+          git-config-name: GitHub Action
+
+  # ==================================================
+  # 🐢 车道三：慢车道 B (agx.py)
+  # ==================================================
+  slow-lane-agx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.14'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install yfinance pandas numpy baostock
+
+      - name: Run AGX Script 🐢
+        run: |
+          echo ">>> [慢车道B] 开始运行 agx.py..."
+          python agx.py
+          echo ">>> [慢车道B] 完成！"
+
+      - name: Deploy AGX Report
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: .
+          clean: false # 关键
           git-config-email: action@github.com
           git-config-name: GitHub Action
