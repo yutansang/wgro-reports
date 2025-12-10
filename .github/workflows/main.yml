@@ -36,6 +36,7 @@ jobs:
           python mg.py
           python wh.py
           python qqbdw.py
+          python foex.py
           echo ">>> [快车道] 完成！"
 
       - name: Deploy Fast Reports
