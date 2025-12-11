@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 美股深度全景分析报告生成器 (US Stock Deep Dive Edition)
-版本: 3.0 (深度叙事逻辑增强版)
-新增: 
-1. "深度解读"模块：包含核心头条、个股显微镜、宏观背离、风格验证、操作建议。
-2. 动态推理引擎：能根据不同行情（普涨、普跌、轮动、背离）自动生成对应的分析文案。
+版本: 3.1 (绝对动量版)
+更新: 
+1. 核心逻辑变更：从“相对SPY动量”改为“绝对价格动量”。
+2. 移除了对 Benchmark (SPY) 的计算依赖。
+3. 深度解读模块完全适配绝对动量逻辑。
 """
 
 import yfinance as yf
@@ -20,7 +21,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # 1. 配置参数
 # =============================================================================
 
-BENCHMARK_TICKER = 'SPY' 
+# [修改] 移除了强制的 BENCHMARK_TICKER 依赖
 TIME_PERIODS = {'long_term': 60, 'mid_term': 20, 'short_term': 5}
 PERIOD_WEIGHTS = {'long_term': 0.6, 'mid_term': 0.3, 'short_term': 0.1}
 
@@ -52,18 +53,20 @@ WATCHLIST_STOCKS = [
     "LLY", "UNH", 
     "XOM", "CVX", 
     "COST", "WMT", 
-    "NFLX", "DIS"
+    "NFLX", "DIS",
+    "SPY" # [新增] 把 SPY 作为普通资产加入观察列表
 ]
 
 ALL_ANALYSIS_ASSETS = list(set(list(MACRO_INDICATORS.values()) + list(SECTOR_ETFS.values()) + WATCHLIST_STOCKS))
 
+# [修改] 更新列名，反映绝对动量逻辑
 COLUMN_TRANSLATIONS = {
-    'master_score': '综合大师分 (Alpha)',
-    'weighted_z_score_rs': '加权相对Z值',
+    'master_score': '综合大师分 (Momentum)', # 原: Alpha
+    'weighted_z_score_rs': '加权动量Z值', # 原: 加权相对Z值
     'acceleration': '动能加速度',
-    f'z_score_rs_{TIME_PERIODS["long_term"]}d': f'{TIME_PERIODS["long_term"]}日相对趋势',
-    f'z_score_rs_{TIME_PERIODS["mid_term"]}d': f'{TIME_PERIODS["mid_term"]}日相对趋势',
-    f'z_score_rs_{TIME_PERIODS["short_term"]}d': f'{TIME_PERIODS["short_term"]}日相对趋势'
+    f'z_score_rs_{TIME_PERIODS["long_term"]}d': f'{TIME_PERIODS["long_term"]}日绝对趋势',
+    f'z_score_rs_{TIME_PERIODS["mid_term"]}d': f'{TIME_PERIODS["mid_term"]}日绝对趋势',
+    f'z_score_rs_{TIME_PERIODS["short_term"]}d': f'{TIME_PERIODS["short_term"]}日绝对趋势'
 }
 
 COLUMN_ORDER = [
@@ -82,7 +85,10 @@ def fetch_data_robust(tickers, period="2y"):
     print(f"正在下载 {len(tickers)} 个美股资产数据...")
     all_data = []
     try:
+        # group_by='ticker' 确保多级索引结构一致
         data = yf.download(tickers, period=period, auto_adjust=True, progress=False, group_by='ticker')
+        
+        # 如果只有一个资产，结构会不同，做特殊处理
         if len(tickers) == 1:
              df = data['Close'].to_frame()
              df.columns = tickers
@@ -110,27 +116,29 @@ def fetch_data_robust(tickers, period="2y"):
             except: pass
         return pd.concat(all_data, axis=1) if all_data else pd.DataFrame()
 
-def calculate_professional_momentum_score(price_data, benchmark_price):
+# [修改] 移除了 benchmark_price 参数
+def calculate_professional_momentum_score(price_data):
     results = []
     ticker_to_name = {v: k for k, v in {**MACRO_INDICATORS, **SECTOR_ETFS}.items()}
     
     for ticker in price_data.columns:
-        if ticker == benchmark_price.name: continue
-        
         asset_price = price_data[ticker]
-        aligned_benchmark = benchmark_price.reindex(asset_price.index).ffill()
         
-        is_macro = ticker in MACRO_INDICATORS.values()
-        relative_price = asset_price if is_macro else (asset_price / aligned_benchmark).dropna()
+        # [核心修改] 移除了除法逻辑，直接使用绝对价格
+        # aligned_benchmark = benchmark_price.reindex(asset_price.index).ffill()
+        # relative_price = asset_price if is_macro else (asset_price / aligned_benchmark).dropna()
+        
+        analysis_price = asset_price.dropna()
 
-        if len(relative_price) < max(TIME_PERIODS.values()): continue
+        if len(analysis_price) < max(TIME_PERIODS.values()): continue
         
         metrics = {'Ticker': ticker}
         weighted_z_score_sum = 0
         
         for term, period_days in TIME_PERIODS.items():
-            if len(relative_price) >= period_days:
-                rs_returns = (relative_price / relative_price.shift(period_days)) - 1
+            if len(analysis_price) >= period_days:
+                # 计算绝对收益率
+                rs_returns = (analysis_price / analysis_price.shift(period_days)) - 1
                 mean, std = rs_returns.mean(), rs_returns.std()
                 
                 if std > 0:
@@ -170,8 +178,16 @@ def generate_market_sentiment_module(all_scores_df):
             if n in all_scores_df.index: return all_scores_df.loc[n, 'weighted_z_score_rs']
         return 0
 
+    # 逻辑解释：
+    # VIX 绝对上涨 -> 恐慌
+    # TNX 绝对上涨 -> 利率压力 -> 恐慌 (通常)
     fear = get_z("VIX恐慌指数") + get_z("十年期美债收益率")
+    
+    # XLY 绝对上涨 -> 消费强 -> Risk On
+    # XLP 绝对上涨 -> 防御强 -> Risk Off (相对意义，但在绝对版中，如果 XLY 涨得比 XLP 多，Risk On 依然成立)
     risk_on = get_z("可选消费 (XLY)") - get_z("必选消费 (XLP)")
+    
+    # SMH 绝对上涨 -> 科技强 -> Risk On
     tech = get_z("半导体 (SMH)")
     
     score = risk_on + (tech * 0.5) - (fear * 0.8)
@@ -196,7 +212,7 @@ def generate_market_sentiment_module(all_scores_df):
 
 ### 综合分析 ###
 def generate_deep_dive_analysis_html(all_scores_df, correlation_matrix):
-    html = "<h2>🧠 智能深度洞察 (AI Deep Dive)</h2>"
+    html = "<h2>🧠 智能深度洞察 (AI Deep Dive - 绝对动量版)</h2>"
     
     # 1. 加速度
     accelerating = all_scores_df.sort_values('acceleration', ascending=False)
@@ -240,7 +256,7 @@ def generate_deep_dive_analysis_html(all_scores_df, correlation_matrix):
     longs = all_scores_df[(all_scores_df['master_score']>3) & (all_scores_df['acceleration']>-0.5)].sort_values('master_score', ascending=False).head(3)
     if not longs.empty:
         html += "<h4>🌟 核心多头</h4><ul>"
-        for asset, row in longs.iterrows(): html += f"<li><b>{asset}</b>: 大师分 {row['master_score']:.2f}，趋势稳健。</li>"
+        for asset, row in longs.iterrows(): html += f"<li><b>{asset}</b>: 大师分 {row['master_score']:.2f}，绝对趋势稳健。</li>"
         html += "</ul>"
 
     return html
@@ -268,7 +284,7 @@ def generate_deep_interpretation_module(all_scores_df):
         # 判定市场剧本
         headline_text = ""
         if best_sector['acceleration'] > 1.0 and worst_sector['acceleration'] < -1.0:
-            headline_text = f"<b>暴力风格切换 (Great Rotation)</b>。资金正在从<b>{worst_sector.name}</b>板块恐慌出逃（加速度 {worst_sector['acceleration']:.2f}），并暴力涌入<b>{best_sector.name}</b>（加速度 +{best_sector['acceleration']:.2f}）。这不是普涨，这是一场血腥的调仓换股。"
+            headline_text = f"<b>暴力风格切换 (Great Rotation)</b>。资金正在从<b>{worst_sector.name}</b>板块恐慌出逃（加速度 {worst_sector['acceleration']:.2f}），并暴力涌入<b>{best_sector.name}</b>（加速度 +{best_sector['acceleration']:.2f}）。"
         elif best_sector['acceleration'] > 0.5 and worst_sector['acceleration'] > -0.5:
             headline_text = f"<b>多头共振 (Broad Rally)</b>。市场呈现普涨态势，领头羊是<b>{best_sector.name}</b>。并未出现明显的板块溃败，市场风险偏好较高。"
         elif best_sector['acceleration'] < 0.5 and worst_sector['acceleration'] < -1.0:
@@ -294,7 +310,7 @@ def generate_deep_interpretation_module(all_scores_df):
         waking = stocks_df[(stocks_df['master_score'] < -1) & (stocks_df['acceleration'] > 1.0)]
         if not waking.empty:
             s = waking.iloc[0]
-            html += f"<li><b>🐂 沉睡巨人苏醒 ({s.name})</b>: 它的总分很低({s['master_score']:.2f})，说明调整了很久。但看它的加速度(+{s['acceleration']:.2f})！这是典型的<b>底部反转</b>信号，右侧交易机会可能已经出现。</li>"
+            html += f"<li><b>🐂 沉睡巨人苏醒 ({s.name})</b>: 它的总分很低({s['master_score']:.2f})，说明调整了很久。但看它的加速度(+{s['acceleration']:.2f})！这是典型的<b>底部反转</b>信号。</li>"
         
         # 场景B: 稳如泰山 (长期好，短期稳)
         steady = stocks_df[(stocks_df['master_score'] > 3) & (stocks_df['acceleration'] > -0.5)].sort_values('master_score', ascending=False)
@@ -317,11 +333,11 @@ def generate_deep_interpretation_module(all_scores_df):
     
     if tnx_z is not None and xlk_z is not None:
         if tnx_z > 0.5 and xlk_z > 0.5:
-            html += f"<p>⚠️ <b>异常背离！</b>美债收益率飙升(5d Z={tnx_z:.2f})通常利空科技股，但科技股却在顶风作案(5d Z={xlk_z:.2f})。这要么说明科技股基本面强到无视利率，要么是一次<b>不可持续的逼空</b>，需警惕收益率继续上行带来的补跌风险。</p>"
+            html += f"<p>⚠️ <b>异常背离！</b>美债收益率飙升(5d Z={tnx_z:.2f})通常利空科技股，但科技股却在顶风作案(5d Z={xlk_z:.2f})。这要么说明科技股基本面强到无视利率，要么是一次<b>不可持续的逼空</b>。</p>"
         elif tnx_z < -0.5 and xlk_z > 0.5:
             html += f"<p>✅ <b>顺风顺水。</b>美债收益率下行(5d Z={tnx_z:.2f})，为科技股的上涨提供了完美的流动性环境，这种上涨通常比较健康。</p>"
         elif tnx_z > 0.5 and xlk_z < -0.5:
-            html += f"<p>📉 <b>教科书式压制。</b>利率上行(5d Z={tnx_z:.2f})正在精准打击高估值的科技股，这是标准的宏观逻辑，建议等待利率企稳。</p>"
+            html += f"<p>📉 <b>教科书式压制。</b>利率上行(5d Z={tnx_z:.2f})正在精准打击高估值的科技股，这是标准的宏观逻辑。</p>"
         else:
             html += "<p>当前宏观因子与股市的关系处于正常波动范围，未见显著异常。</p>"
     else: html += "<p>宏观数据不足，无法判定。</p>"
@@ -398,7 +414,7 @@ def create_html_report(all_html_sections, filename="mg.html"):
         .styled-table tr:nth-child(even){background:#f9f9f9}
         li{margin-bottom:8px} b{font-weight:700;color:#333}
     </style>"""
-    html_t = f"<!DOCTYPE html><html><head><meta charset='UTF-8'><title>美股报告</title>{css}</head><body><div class='container'><h1>🇺🇸 美股全景交易决策看板 (v3.0 深度解读版)</h1><p style='text-align:center;color:#888'>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>{''.join(all_html_sections)}</div></body></html>"
+    html_t = f"<!DOCTYPE html><html><head><meta charset='UTF-8'><title>美股报告 (绝对动量)</title>{css}</head><body><div class='container'><h1>🇺🇸 美股全景交易决策看板 (v3.1 绝对动量版)</h1><p style='text-align:center;color:#888'>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>{''.join(all_html_sections)}</div></body></html>"
     with open(filename, 'w', encoding='utf-8') as f: f.write(html_t)
     print(f"报告已生成: {filename}")
 
@@ -406,15 +422,16 @@ def create_html_report(all_html_sections, filename="mg.html"):
 # 4. 主程序
 # =============================================================================
 if __name__ == '__main__':
-    print("启动美股深度分析引擎 (v3.0)...")
-    all_tickers = list(set(ALL_ANALYSIS_ASSETS + [BENCHMARK_TICKER]))
+    print("启动美股深度分析引擎 (v3.1 绝对动量版)...")
+    
+    # [修改] 移除了 BENCHMARK_TICKER，直接分析列表中的资产
+    all_tickers = list(set(ALL_ANALYSIS_ASSETS))
     price_data = fetch_data_robust(all_tickers, period="2y")
     
-    if not price_data.empty and BENCHMARK_TICKER in price_data.columns:
-        benchmark_data = price_data[BENCHMARK_TICKER]
-        
-        print("正在计算动量...")
-        full_analysis_df = calculate_professional_momentum_score(price_data, benchmark_data)
+    if not price_data.empty:
+        # [修改] 直接处理 price_data，不再分离 benchmark
+        print("正在计算绝对动量...")
+        full_analysis_df = calculate_professional_momentum_score(price_data)
         
         # 全局计算加速度
         st_col = f'z_score_rs_{TIME_PERIODS["short_term"]}d'
@@ -436,14 +453,13 @@ if __name__ == '__main__':
         if not full_analysis_df.empty:
             html_sections.append(generate_market_sentiment_module(full_analysis_df))
             html_sections.append(generate_deep_dive_analysis_html(full_analysis_df, corr_matrix))
-            
-            # [新增] 插入深度解读模块
             html_sections.append(generate_deep_interpretation_module(full_analysis_df))
             
+            # [修改] 更新了表格标题
             groups = [
-                ("📊 十大板块动量排名 (vs SPY)", SECTOR_ETFS.values()),
-                ("🔥 核心关注个股排名 (vs SPY)", WATCHLIST_STOCKS),
-                ("🌍 宏观指标趋势", MACRO_INDICATORS.values())
+                ("📊 十大板块动量排名 (绝对动量)", SECTOR_ETFS.values()),
+                ("🔥 核心关注个股排名 (绝对动量)", WATCHLIST_STOCKS),
+                ("🌍 宏观指标趋势 (绝对动量)", MACRO_INDICATORS.values())
             ]
             
             reverse_map = {v: k for k, v in {**MACRO_INDICATORS, **SECTOR_ETFS}.items()}
@@ -459,4 +475,3 @@ if __name__ == '__main__':
         create_html_report(html_sections)
     else:
         print("数据不足，无法生成。")
-
