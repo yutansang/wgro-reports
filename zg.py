@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 中概股全景交易决策看板 (China ADR Deep Dive Edition)
-版本: 2.0 (深度探索增强版)
-新增功能: 
-1. [深度探索] 模块：包含核心定调、风格分化、宏观背离、策略建议四个维度。
-2. 动态逻辑引擎：能区分"超跌反弹"、"强者恒强"、"阴跌不止"等不同市场状态。
+版本: 2.1 (绝对动量版)
+更新: 
+1. 核心逻辑变更：从“相对SPY动量”改为“绝对价格动量”。
+2. 移除了对 Benchmark (SPY) 的计算依赖。
+3. 深度解读模块完全适配绝对动量逻辑。
 """
 
 import yfinance as yf
@@ -19,7 +20,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # 1. 配置参数
 # =============================================================================
 
-BENCHMARK_TICKER = 'SPY' 
+# [修改] 移除了 BENCHMARK_TICKER 依赖
 TIME_PERIODS = {'long_term': 60, 'mid_term': 20, 'short_term': 5}
 PERIOD_WEIGHTS = {'long_term': 0.6, 'mid_term': 0.3, 'short_term': 0.1}
 
@@ -49,13 +50,14 @@ SECTOR_MAPPING = {
 
 ALL_ANALYSIS_ASSETS = list(set(list(MACRO_INDICATORS.values()) + list(SECTOR_MAPPING.values())))
 
+# [修改] 列名更新为绝对动量逻辑
 COLUMN_TRANSLATIONS = {
-    'master_score': '综合大师分 (Alpha)',
-    'weighted_z_score_rs': '加权相对Z值',
+    'master_score': '综合大师分 (Momentum)', # 原: Alpha
+    'weighted_z_score_rs': '加权动量Z值',     # 原: 加权相对Z值
     'acceleration': '动能加速度',
-    f'z_score_rs_{TIME_PERIODS["long_term"]}d': f'{TIME_PERIODS["long_term"]}日相对趋势',
-    f'z_score_rs_{TIME_PERIODS["mid_term"]}d': f'{TIME_PERIODS["mid_term"]}日相对趋势',
-    f'z_score_rs_{TIME_PERIODS["short_term"]}d': f'{TIME_PERIODS["short_term"]}日相对趋势'
+    f'z_score_rs_{TIME_PERIODS["long_term"]}d': f'{TIME_PERIODS["long_term"]}日绝对趋势',
+    f'z_score_rs_{TIME_PERIODS["mid_term"]}d': f'{TIME_PERIODS["mid_term"]}日绝对趋势',
+    f'z_score_rs_{TIME_PERIODS["short_term"]}d': f'{TIME_PERIODS["short_term"]}日绝对趋势'
 }
 
 COLUMN_ORDER = ['master_score', 'weighted_z_score_rs', f'z_score_rs_{TIME_PERIODS["long_term"]}d', f'z_score_rs_{TIME_PERIODS["mid_term"]}d', f'z_score_rs_{TIME_PERIODS["short_term"]}d', 'acceleration']
@@ -65,7 +67,6 @@ COLUMN_ORDER = ['master_score', 'weighted_z_score_rs', f'z_score_rs_{TIME_PERIOD
 # =============================================================================
 def fetch_data_robust(tickers, period="2y"):
     print(f"正在下载 {len(tickers)} 个中概股资产数据...")
-    all_data = []
     try:
         data = yf.download(tickers, period=period, auto_adjust=True, progress=False, group_by='ticker')
         if len(tickers) == 1:
@@ -85,25 +86,26 @@ def fetch_data_robust(tickers, period="2y"):
     except Exception as e:
         print(f"批量下载出错: {e}"); return pd.DataFrame()
 
-def calculate_professional_momentum_score(price_data, benchmark_price):
+# [修改] 移除了 benchmark_price 参数，改为计算绝对动量
+def calculate_professional_momentum_score(price_data):
     results = []
     ticker_to_name = {v: k for k, v in {**MACRO_INDICATORS, **SECTOR_MAPPING}.items()}
     
     for ticker in price_data.columns:
-        if ticker == benchmark_price.name: continue
         asset_price = price_data[ticker]
-        aligned_benchmark = benchmark_price.reindex(asset_price.index).ffill()
         
-        is_macro = ticker in MACRO_INDICATORS.values()
-        relative_price = asset_price if is_macro else (asset_price / aligned_benchmark).dropna()
+        # [核心修改] 直接使用绝对价格
+        # relative_price = (asset_price / aligned_benchmark).dropna()
+        analysis_price = asset_price.dropna()
 
-        if len(relative_price) < max(TIME_PERIODS.values()): continue
+        if len(analysis_price) < max(TIME_PERIODS.values()): continue
         
         metrics = {'Ticker': ticker}
         weighted_z_score_sum = 0
         for term, period_days in TIME_PERIODS.items():
-            if len(relative_price) >= period_days:
-                rs_returns = (relative_price / relative_price.shift(period_days)) - 1
+            if len(analysis_price) >= period_days:
+                # 计算绝对收益率
+                rs_returns = (analysis_price / analysis_price.shift(period_days)) - 1
                 mean, std = rs_returns.mean(), rs_returns.std()
                 if std > 0:
                     z_score = (rs_returns.iloc[-1] - mean) / std
@@ -141,6 +143,7 @@ def generate_market_sentiment_module(all_scores_df):
         return 0
 
     cnh_z = get_z("离岸人民币汇率 (USD/CNH)")
+    # CNH绝对上涨 = 人民币贬值 = 压力增加。逻辑不变。
     currency_pressure = cnh_z * -1.0 
     market_heat = get_z("中概互联ETF (KWEB)")
     leverage_sentiment = get_z("3倍做多中国 (YINN)")
@@ -162,7 +165,7 @@ def generate_market_sentiment_module(all_scores_df):
             <div style='height:100%; width:2px; background-color:#343a40; position:absolute; left:50%;'></div>
             <div style='height:25px; width:25px; background-color:{c}; border:3px solid #fff; border-radius:50%; position:absolute; top:0; left:calc({(sentiment_score+10)*5}% - 12.5px);'></div>
         </div>
-        <p style='margin-top:15px; font-size:0.9em; color:#666;'>因子解构: 汇率压力({cnh_z:.2f}) | 市场热度({market_heat:.2f})</p>
+        <p style='margin-top:15px; font-size:0.9em; color:#666;'>因子解构: 汇率趋势({cnh_z:.2f}) | 市场热度({market_heat:.2f})</p>
     </div>"""
     return html
 
@@ -188,7 +191,7 @@ def generate_deep_interpretation_module(all_scores_df):
 
 ### [NEW] 深度探索模块 (逻辑增强版) ###
 def generate_deep_exploration_module(all_scores_df):
-    html = "<h2>🔍 深度探索 (Deep Exploration)</h2>"
+    html = "<h2>🔍 深度探索 (Deep Exploration - 绝对动量版)</h2>"
     ticker_map = {v: k for k, v in {**MACRO_INDICATORS, **SECTOR_MAPPING}.items()}
     
     # 辅助函数
@@ -241,11 +244,12 @@ def generate_deep_exploration_module(all_scores_df):
 
     # --- 3. 极度危险的宏观背离 (Macro Divergence) ---
     html += "<h3 style='margin-top:20px;'>3. 极度危险的宏观背离（关键警示！）</h3>"
-    cnh_z = get_val("离岸人民币汇率 (USD/CNH)", 'z_score_rs_5d') # 5日汇率趋势
+    cnh_z = get_val("离岸人民币汇率 (USD/CNH)", 'z_score_rs_5d') # 5日汇率绝对趋势
     stock_acc = kweb_acc if kweb_acc is not None else 0
     
     if cnh_z is not None:
         # 场景A: 汇率贬值(CNH涨, Z>0.5) + 股市涨(Acc>0.3) = 危险背离
+        # 注：CNH=F 上涨代表人民币贬值，这通常利空中概股。如果中概股还在涨，就是背离。
         if cnh_z > 0.5 and stock_acc > 0.3:
             html += f"<p>⚠️ <b>不可持续的背离！</b></p><ul>"
             html += f"<li><b>离岸人民币</b>: 5日趋势 <b style='color:#dc3545'>+{cnh_z:.2f} (加速贬值)</b>。</li>"
@@ -354,7 +358,7 @@ def create_html_report(all_html_sections, filename="zg.html"):
         .styled-table tr:nth-child(even){background:#fff5f5}
         li{margin-bottom:8px} b{font-weight:700;color:#000}
     </style>"""
-    html_t = f"<!DOCTYPE html><html><head><meta charset='UTF-8'><title>中概股报告</title>{css}</head><body><div class='container'><h1>🇨🇳 中概股(ADR)全景交易决策看板</h1><p style='text-align:center;color:#888'>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>{''.join(all_html_sections)}</div></body></html>"
+    html_t = f"<!DOCTYPE html><html><head><meta charset='UTF-8'><title>中概股报告 (绝对动量)</title>{css}</head><body><div class='container'><h1>🇨🇳 中概股(ADR)全景交易决策看板 (v2.1 绝对动量版)</h1><p style='text-align:center;color:#888'>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>{''.join(all_html_sections)}</div></body></html>"
     with open(filename, 'w', encoding='utf-8') as f: f.write(html_t)
     print(f"报告已生成: {filename}")
 
@@ -362,15 +366,16 @@ def create_html_report(all_html_sections, filename="zg.html"):
 # 4. 主程序
 # =============================================================================
 if __name__ == '__main__':
-    print("启动中概股深度分析引擎...")
-    all_tickers = list(set(ALL_ANALYSIS_ASSETS + [BENCHMARK_TICKER]))
+    print("启动中概股深度分析引擎 (v2.1 绝对动量版)...")
+    
+    # [修改] 移除了 BENCHMARK_TICKER，直接使用 ALL_ANALYSIS_ASSETS
+    all_tickers = list(set(ALL_ANALYSIS_ASSETS))
     price_data = fetch_data_robust(all_tickers, period="2y")
     
-    if not price_data.empty and BENCHMARK_TICKER in price_data.columns:
-        benchmark_data = price_data[BENCHMARK_TICKER]
-        
-        print("正在计算Alpha动量...")
-        full_analysis_df = calculate_professional_momentum_score(price_data, benchmark_data)
+    if not price_data.empty:
+        # [修改] 调用时不传 benchmark_data
+        print("正在计算绝对动量...")
+        full_analysis_df = calculate_professional_momentum_score(price_data)
         
         # 全局计算加速度
         st_col = f'z_score_rs_{TIME_PERIODS["short_term"]}d'
@@ -382,13 +387,14 @@ if __name__ == '__main__':
         html_sections = []
         if not full_analysis_df.empty:
             html_sections.append(generate_market_sentiment_module(full_analysis_df))
-            html_sections.append(generate_deep_dive_analysis_html(full_analysis_df)) # 原有的板块雷达
-            html_sections.append(generate_deep_interpretation_module(full_analysis_df)) # 原有的简报
-            html_sections.append(generate_deep_exploration_module(full_analysis_df)) # [NEW] 深度探索
+            html_sections.append(generate_deep_dive_analysis_html(full_analysis_df)) 
+            html_sections.append(generate_deep_interpretation_module(full_analysis_df)) 
+            html_sections.append(generate_deep_exploration_module(full_analysis_df)) 
             
+            # [修改] 标题移除了 (vs SPY)，改为 (绝对动量)
             groups = [
-                ("🔥 热门中概股动量排名 (vs SPY)", SECTOR_MAPPING.values()),
-                ("🌍 宏观与ETF指标", MACRO_INDICATORS.values())
+                ("🔥 热门中概股动量排名 (绝对动量)", SECTOR_MAPPING.values()),
+                ("🌍 宏观与ETF指标 (绝对动量)", MACRO_INDICATORS.values())
             ]
             reverse_map = {v: k for k, v in {**MACRO_INDICATORS, **SECTOR_MAPPING}.items()}
             for title, tickers in groups:
@@ -402,4 +408,3 @@ if __name__ == '__main__':
         create_html_report(html_sections)
     else:
         print("数据不足。")
-
