@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-中国A股全景交易决策看板 (BaoStock Pro Max版 - 完全体)
-版本: 5.3 (支持多配置文件)
+中国A股全景交易决策看板 (BaoStock Pro Max版 - 绝对动量完全体)
+版本: 5.4 (绝对动量 + 多配置支持)
+更新:
+1. 核心逻辑变更：从“相对沪深300动量”改为“绝对价格动量”。
+2. 移除了对 Benchmark (沪深300) 的计算依赖。
+3. 深度解读模块文案适配绝对动量逻辑。
 """
 
 import baostock as bs
@@ -18,7 +22,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # 1. 全局配置 (固定部分)
 # =============================================================================
 
-BENCHMARK_TICKER = 'sh.000300' 
+# [修改] 移除了 BENCHMARK_TICKER 的强制依赖，保留变量名仅作数据获取时的占位(如果需要)
 TIME_PERIODS = {'long_term': 60, 'mid_term': 20, 'short_term': 5}
 PERIOD_WEIGHTS = {'long_term': 0.6, 'mid_term': 0.3, 'short_term': 0.1}
 
@@ -33,14 +37,14 @@ MACRO_INDICATORS = {
     "科创50 (硬科技)": "sh.000688"
 }
 
-# 报告列名翻译与顺序
+# [修改] 报告列名翻译与顺序 - 适配绝对动量
 COLUMN_TRANSLATIONS = {
-    'master_score': '综合大师分 (Alpha)',
-    'weighted_z_score_rs': '加权相对Z值',
+    'master_score': '综合大师分 (Momentum)', # 原: Alpha
+    'weighted_z_score_rs': '加权动量Z值',     # 原: 加权相对Z值
     'acceleration': '动能加速度',
-    f'z_score_rs_{TIME_PERIODS["long_term"]}d': f'{TIME_PERIODS["long_term"]}日相对趋势',
-    f'z_score_rs_{TIME_PERIODS["mid_term"]}d': f'{TIME_PERIODS["mid_term"]}日相对趋势',
-    f'z_score_rs_{TIME_PERIODS["short_term"]}d': f'{TIME_PERIODS["short_term"]}日相对趋势'
+    f'z_score_rs_{TIME_PERIODS["long_term"]}d': f'{TIME_PERIODS["long_term"]}日绝对趋势',
+    f'z_score_rs_{TIME_PERIODS["mid_term"]}d': f'{TIME_PERIODS["mid_term"]}日绝对趋势',
+    f'z_score_rs_{TIME_PERIODS["short_term"]}d': f'{TIME_PERIODS["short_term"]}日绝对趋势'
 }
 COLUMN_ORDER = ['master_score', 'weighted_z_score_rs', f'z_score_rs_{TIME_PERIODS["long_term"]}d', f'z_score_rs_{TIME_PERIODS["mid_term"]}d', f'z_score_rs_{TIME_PERIODS["short_term"]}d', 'acceleration']
 
@@ -84,26 +88,28 @@ def fetch_data_baostock(tickers, years=2):
     return combined_df
 
 # =============================================================================
-# 3. 计算逻辑 (已修改)
+# 3. 计算逻辑 (核心修改：绝对动量)
 # =============================================================================
-def calculate_professional_momentum_score(price_data, benchmark_price, ticker_mapping):
+def calculate_professional_momentum_score(price_data, ticker_mapping):
     results = []
     ticker_to_name = {v: k for k, v in ticker_mapping.items()}
     
     for ticker in price_data.columns:
-        if ticker == benchmark_price.name: continue
+        # [修改] 不再跳过基准，所有传入的资产都计算
         asset_price = price_data[ticker]
-        aligned_benchmark = benchmark_price.reindex(asset_price.index).ffill()
-        is_index = ticker in MACRO_INDICATORS.values()
-        relative_price = asset_price if is_index else (asset_price / aligned_benchmark).dropna()
+        
+        # [核心修改] 直接使用绝对价格，不再除以基准
+        # relative_price = asset_price if is_index else (asset_price / aligned_benchmark).dropna()
+        analysis_price = asset_price.dropna()
 
-        if len(relative_price) < max(TIME_PERIODS.values()): continue
+        if len(analysis_price) < max(TIME_PERIODS.values()): continue
         
         metrics = {'Ticker': ticker}
         weighted_z_score_sum = 0
         for term, period_days in TIME_PERIODS.items():
-            if len(relative_price) >= period_days:
-                rs_returns = (relative_price / relative_price.shift(period_days)) - 1
+            if len(analysis_price) >= period_days:
+                # 计算绝对收益率
+                rs_returns = (analysis_price / analysis_price.shift(period_days)) - 1
                 mean, std = rs_returns.mean(), rs_returns.std()
                 if std > 0:
                     z_score = (rs_returns.iloc[-1] - mean) / std
@@ -126,13 +132,12 @@ def calculate_professional_momentum_score(price_data, benchmark_price, ticker_ma
     return df
 
 # =============================================================================
-# 4. 报告生成模块 (未变动)
+# 4. 报告生成模块 (文案适配)
 # =============================================================================
 
 def generate_market_sentiment_module(all_scores_df):
     html = "<h2>🐉 A股情绪全景 (Market Sentiment)</h2>"
     def get_z(name):
-        # 此函数依赖的股票名称相对固定，如果分析池中包含它们，就会被正确计算
         if name in all_scores_df.index:
             return all_scores_df.loc[name, 'weighted_z_score_rs']
         return 0
@@ -164,7 +169,7 @@ def generate_market_sentiment_module(all_scores_df):
     return html
 
 def generate_deep_exploration_module(all_scores_df):
-    html = "<h2>🧠 深度洞察 (AI Narrative)</h2>"
+    html = "<h2>🧠 深度洞察 (AI Narrative - 绝对动量版)</h2>"
     html += "<h3 style='margin-top:30px; border-bottom: 2px solid #eee; padding-bottom:10px;'>数据深度解读：正反逻辑链</h3>"
     html += "<div style='background-color:#f8f9fa; padding:20px; border-radius:8px; border-left: 5px solid #0056b3;'>"
     
@@ -180,32 +185,31 @@ def generate_deep_exploration_module(all_scores_df):
     true_bulls = find_stocks((stocks_df['master_score'] > 2) & (stocks_df['acceleration'] > 0.3))
     if not true_bulls.empty:
         top = true_bulls.iloc[0]
-        html += f"<div style='margin-bottom:20px;'><h4 style='color:#d93025; margin:0;'>✅ 真·主升浪 (买入/持有)</h4><p><b>标的案例：{top.name}</b></p><ul><li><b>【数据真相】</b>: Alpha高达 <b>{top['master_score']:.2f}</b> (全场领先)，且加速度 <b>+{top['acceleration']:.2f}</b> (还在加速)。</li><li><b>【逻辑判断】</b>: 这是完美的<b>'戴维斯双击'</b>形态。既有长期趋势支撑，短期又在加速上攻。它是当前市场的<b>绝对龙头</b>。</li><li><b>【操作对策】</b>: <b style='color:#d93025'>抱紧大腿</b>。只要不出现加速跌破5日线，就一直持有。</li></ul></div>"
+        html += f"<div style='margin-bottom:20px;'><h4 style='color:#d93025; margin:0;'>✅ 真·主升浪 (买入/持有)</h4><p><b>标的案例：{top.name}</b></p><ul><li><b>【数据真相】</b>: 大师分高达 <b>{top['master_score']:.2f}</b> (全场领先)，且加速度 <b>+{top['acceleration']:.2f}</b> (还在加速)。</li><li><b>【逻辑判断】</b>: 这是完美的<b>'戴维斯双击'</b>形态。既有长期趋势支撑，短期又在加速上攻。它是当前市场的<b>绝对龙头</b>。</li><li><b>【操作对策】</b>: <b style='color:#d93025'>抱紧大腿</b>。只要不出现加速跌破5日线，就一直持有。</li></ul></div>"
 
     # B. 高位预警
     danger_high = find_stocks((stocks_df['master_score'] > 2) & (stocks_df['acceleration'] < -0.5))
     if not danger_high.empty:
         top = danger_high.sort_values('acceleration', ascending=True).iloc[0]
-        html += f"<div style='margin-bottom:20px;'><h4 style='color:#ffc107; margin:0;'>⚠️ 高位预警 (减仓/止盈)</h4><p><b>标的案例：{top.name}</b></p><ul><li><b>【数据真相】</b>: 长期Alpha依然很高 <b>{top['master_score']:.2f}</b>，但加速度已崩塌至 <b style='color:#28a745'>{top['acceleration']:.2f}</b>。</li><li><b>【逻辑判断】</b>: 这是典型的<b>'强弩之末'</b>。上涨动能衰竭，资金正在撤退，<b>获利了结</b>信号明显。</li><li><b>【操作对策】</b>: <b style='color:#ffc107'>坚决止盈</b>。不要迷恋过去的辉煌，不要去吃最后的一个铜板。</li></ul></div>"
+        html += f"<div style='margin-bottom:20px;'><h4 style='color:#ffc107; margin:0;'>⚠️ 高位预警 (减仓/止盈)</h4><p><b>标的案例：{top.name}</b></p><ul><li><b>【数据真相】</b>: 长期大师分依然很高 <b>{top['master_score']:.2f}</b>，但加速度已崩塌至 <b style='color:#28a745'>{top['acceleration']:.2f}</b>。</li><li><b>【逻辑判断】</b>: 这是典型的<b>'强弩之末'</b>。上涨动能衰竭，资金正在撤退，<b>获利了结</b>信号明显。</li><li><b>【操作对策】</b>: <b style='color:#ffc107'>坚决止盈</b>。不要迷恋过去的辉煌，不要去吃最后的一个铜板。</li></ul></div>"
 
     # C. 超跌反弹
     rebound = find_stocks((stocks_df['master_score'] < -0.5) & (stocks_df['acceleration'] > 0.5))
     if not rebound.empty:
         top = rebound.iloc[0]
-        html += f"<div style='margin-bottom:20px;'><h4 style='color:#17a2b8; margin:0;'>⚡ 超跌反弹 (博弈/短线)</h4><p><b>标的案例：{top.name}</b></p><ul><li><b>【数据真相】</b>: 长期Alpha还在水下 <b>{top['master_score']:.2f}</b>，但加速度异军突起 <b style='color:#d93025'>+{top['acceleration']:.2f}</b>。</li><li><b>【逻辑判断】</b>: <b>'困境反转'</b>的首选。跌得太久了，主力资金开始猛烈回补。</li><li><b>【操作对策】</b>: <b style='color:#17a2b8'>右侧试错</b>。适合短线快进快出，一旦加速度转弱立即离场。</li></ul></div>"
+        html += f"<div style='margin-bottom:20px;'><h4 style='color:#17a2b8; margin:0;'>⚡ 超跌反弹 (博弈/短线)</h4><p><b>标的案例：{top.name}</b></p><ul><li><b>【数据真相】</b>: 长期大师分还在水下 <b>{top['master_score']:.2f}</b>，但加速度异军突起 <b style='color:#d93025'>+{top['acceleration']:.2f}</b>。</li><li><b>【逻辑判断】</b>: <b>'困境反转'</b>的首选。跌得太久了，主力资金开始猛烈回补。</li><li><b>【操作对策】</b>: <b style='color:#17a2b8'>右侧试错</b>。适合短线快进快出，一旦加速度转弱立即离场。</li></ul></div>"
 
     # D. 深不见底
     avoids = find_stocks((stocks_df['master_score'] < -1) & (stocks_df['acceleration'] < -0.2))
     if not avoids.empty:
         top = avoids.sort_values('acceleration', ascending=True).iloc[0]
-        html += f"<div><h4 style='color:#28a745; margin:0;'>❌ 深不见底 (回避)</h4><p><b>标的案例：{top.name}</b></p><ul><li><b>【数据真相】</b>: Alpha深绿 <b>{top['master_score']:.2f}</b>，且加速度还在负值区间 <b style='color:#28a745'>{top['acceleration']:.2f}</b>。</li><li><b>【逻辑判断】</b>: <b>'阴跌不止'</b>。不要轻易抄底，飞刀还没落地。</li><li><b>【操作对策】</b>: <b style='color:#28a745'>坚决远离</b>。这类股票是账户亏损的主要来源。</li></ul></div>"
+        html += f"<div><h4 style='color:#28a745; margin:0;'>❌ 深不见底 (回避)</h4><p><b>标的案例：{top.name}</b></p><ul><li><b>【数据真相】</b>: 大师分深绿 <b>{top['master_score']:.2f}</b>，且加速度还在负值区间 <b style='color:#28a745'>{top['acceleration']:.2f}</b>。</li><li><b>【逻辑判断】</b>: <b>'阴跌不止'</b>。不要轻易抄底，飞刀还没落地。</li><li><b>【操作对策】</b>: <b style='color:#28a745'>坚决远离</b>。这类股票是账户亏损的主要来源。</li></ul></div>"
     
     html += "</div>"
     return html
 
 def generate_sector_radar(all_scores_df):
     html = "<h2>📊 板块动能雷达</h2>"
-    # 此模块依赖固定的分组，如果新配置的股票不在此列，该分组将不会显示
     groups = {
         "核心宽基": ["沪深300 (大盘)", "创业板指 (成长)", "科创50 (硬科技)", "中证1000 (小盘)"],
         "科技主线": ["中芯国际 (半导体)", "工业富联 (AI算力)", "中际旭创 (CPO)", "立讯精密 (果链)"],
@@ -252,7 +256,7 @@ def generate_html_table(df, title):
     html = df_display.to_html(classes='styled-table', escape=False, border=0, justify='center', formatters=formatters)
     return f"<h2>{title}</h2>\n{html}"
 
-def create_html_report(all_html_sections, filename="A股全景分析报告_完全体.html"):
+def create_html_report(all_html_sections, filename="A股全景分析报告_完全体_绝对动量.html"):
     css = """<style>
         body{font-family:"Microsoft YaHei",sans-serif;padding:2rem;background:#f4f6f9;color:#333}
         h1{text-align:center;color:#d93025;border-bottom:3px solid #d93025;padding-bottom:10px} 
@@ -265,7 +269,7 @@ def create_html_report(all_html_sections, filename="A股全景分析报告_完�
         .styled-table tr:hover, .pivot-table tr:hover{background-color:#f1f1f1}
         li{margin-bottom:8px; line-height:1.6;} b{font-weight:700;color:#000}
     </style>"""
-    html_t = f"<!DOCTYPE html><html><head><meta charset='UTF-8'><title>A股深度报告(完全体)</title>{css}</head><body><div class='container'><h1>🇨🇳 A股全景交易决策看板 (v5.3 动态配置版)</h1><p style='text-align:center;color:#888'>数据源: BaoStock | 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>{''.join(all_html_sections)}</div></body></html>"
+    html_t = f"<!DOCTYPE html><html><head><meta charset='UTF-8'><title>A股深度报告(绝对动量版)</title>{css}</head><body><div class='container'><h1>🇨🇳 A股全景交易决策看板 (v5.4 绝对动量版)</h1><p style='text-align:center;color:#888'>数据源: BaoStock | 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>{''.join(all_html_sections)}</div></body></html>"
     with open(filename, 'w', encoding='utf-8') as f: f.write(html_t)
     print(f"✅ 报告已生成: {filename}")
 
@@ -274,27 +278,21 @@ def create_html_report(all_html_sections, filename="A股全景分析报告_完�
 # 5. 主流程 (新)
 # =============================================================================
 def process_config(config_file, sector_mapping, output_filename):
-    """
-    为单个配置文件执行完整的分析和报告生成流程
-    """
     print(f"\n===== 正在处理配置: {config_file} =====")
     
-    # 1. 准备资产列表
     ticker_mapping = {**MACRO_INDICATORS, **sector_mapping}
     all_analysis_assets = list(set(list(MACRO_INDICATORS.values()) + list(sector_mapping.values())))
-    all_tickers = list(set(all_analysis_assets + [BENCHMARK_TICKER]))
+    all_tickers = list(set(all_analysis_assets)) # 不再强制加入 BENCHMARK_TICKER
     
-    # 2. 获取数据
     price_data = fetch_data_baostock(all_tickers)
     
-    if price_data.empty or BENCHMARK_TICKER not in price_data.columns:
+    if price_data.empty:
         print(f"❌ {config_file} 的数据不足。请检查网络或 BaoStock 是否在维护时间。")
         return
 
-    # 3. 计算指标
-    benchmark_data = price_data[BENCHMARK_TICKER]
-    print("⚡ 正在计算 Alpha 与 动量因子...")
-    full_analysis_df = calculate_professional_momentum_score(price_data, benchmark_data, ticker_mapping)
+    # [修改] 调用时不传 benchmark_data
+    print("⚡ 正在计算 绝对动量因子...")
+    full_analysis_df = calculate_professional_momentum_score(price_data, ticker_mapping)
     
     if full_analysis_df.empty:
         print(f"❌ {config_file} 计算得分失败，无法生成报告。")
@@ -307,16 +305,15 @@ def process_config(config_file, sector_mapping, output_filename):
     else:
         full_analysis_df['acceleration'] = 0
     
-    # 4. 生成HTML模块
     html_sections = []
     html_sections.append(generate_market_sentiment_module(full_analysis_df))
     html_sections.append(generate_sector_radar(full_analysis_df))
     html_sections.append(generate_deep_exploration_module(full_analysis_df))
     
-    # 5. 生成HTML表格
+    # [修改] 标题移除了 (vs 沪深300)，改为 (绝对动量)
     categories = [
-        (f"🏆 核心个股排名 (vs 沪深300) - {os.path.basename(config_file)}", sector_mapping.values()),
-        ("🌍 宽基指数趋势", MACRO_INDICATORS.values())
+        (f"🏆 核心个股排名 (绝对动量) - {os.path.basename(config_file)}", sector_mapping.values()),
+        ("🌍 宽基指数趋势 (绝对动量)", MACRO_INDICATORS.values())
     ]
     reverse_map = {v: k for k, v in ticker_mapping.items()}
 
@@ -326,18 +323,14 @@ def process_config(config_file, sector_mapping, output_filename):
             subset = full_analysis_df.loc[target_names].sort_values('master_score', ascending=False)
             html_sections.append(generate_html_table(subset, title))
 
-    # 6. 创建最终报告
     create_html_report(html_sections, filename=output_filename)
 
 def main():
-    print("🚀 启动 A股全景引擎 (v5.3 - 动态配置版)...")
+    print("🚀 启动 A股全景引擎 (v5.4 - 绝对动量版)...")
     
-    # ▼▼▼ 第 1 处修改 ▼▼▼
-    # 将 startswith('config_') 修改为 startswith('yuconfig_')
     config_files = sorted([f for f in os.listdir('.') if f.startswith('yuconfig_') and f.endswith('.json')])
 
     if not config_files:
-        # 更新提示信息，告诉用户新的命名规则
         print("❌ 未找到任何 `yuconfig_*.json` 配置文件。请在脚本目录创建它们。")
         print("   例如，创建一个名为 'yuconfig_我的自选.json' 的文件，内容格式如下:")
         print("""
@@ -348,20 +341,14 @@ def main():
         """)
         return
 
-    # 遍历所有找到的配置文件
     for config_filename in config_files:
         try:
             with open(config_filename, 'r', encoding='utf-8') as f:
                 sector_mapping_data = json.load(f)
             
-            # ▼▼▼ 第 2 处修改 ▼▼▼
-            # 1. 将 replace('config_', ...) 修改为 replace('yuconfig_', ...)
             report_base_name = config_filename.replace('yuconfig_', '').replace('.json', '')
-            
-            # 2. 生成HTML文件名 (这行不用变)
             output_report_name = f"{report_base_name}.html"
 
-            # 调用核心处理函数
             process_config(config_filename, sector_mapping_data, output_report_name)
 
         except json.JSONDecodeError: 
