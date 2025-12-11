@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 中文版网页全球宏观分析报告生成器
-版本: 8.6 (加入动能加速度版)
+版本: 8.7 (绝对动量版)
 更新:
-1. 在最终的排名表中新增了 "动能加速度" 列。
-2. 保持了 >0.7 黄色高亮的视觉风格。
+1. 核心算法变更：从“相对美元指数动量”改为“绝对价格动量”。
+2. 移除了对 UUP 基准数据的依赖。
+3. 更新了所有列名和标题文案，反映绝对动量逻辑。
 """
 
 import yfinance as yf
@@ -20,7 +21,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # 1. 配置参数
 # =============================================================================
 
-BENCHMARK_TICKER = 'UUP'
+# [修改] 移除了 BENCHMARK_TICKER，改为绝对动量模式
 TIME_PERIODS = {'long_term': 60, 'mid_term': 20, 'short_term': 5}
 PERIOD_WEIGHTS = {'long_term': 0.6, 'mid_term': 0.3, 'short_term': 0.1}
 
@@ -38,14 +39,14 @@ GLOBAL_MACRO_ASSETS = {
 }
 ALL_ANALYSIS_ASSETS = list(set(G10_CURRENCIES + EM_CURRENCIES + list(GLOBAL_MACRO_ASSETS.values())))
 
-# [修改 1] 添加加速度的中文翻译
+# [修改] 更新列名翻译，去除“相对”字样
 COLUMN_TRANSLATIONS = {
     'master_score': '综合大师分',
-    'weighted_z_score_rs': '加权相对Z值',
+    'weighted_z_score_rs': '加权动量Z值', # 原: 加权相对Z值
     'acceleration': '动能加速度',
-    f'z_score_rs_{TIME_PERIODS["long_term"]}d': f'{TIME_PERIODS["long_term"]}日相对Z值',
-    f'z_score_rs_{TIME_PERIODS["mid_term"]}d': f'{TIME_PERIODS["mid_term"]}日相对Z值',
-    f'z_score_rs_{TIME_PERIODS["short_term"]}d': f'{TIME_PERIODS["short_term"]}日相对Z值'
+    f'z_score_rs_{TIME_PERIODS["long_term"]}d': f'{TIME_PERIODS["long_term"]}日动量Z值',
+    f'z_score_rs_{TIME_PERIODS["mid_term"]}d': f'{TIME_PERIODS["mid_term"]}日动量Z值',
+    f'z_score_rs_{TIME_PERIODS["short_term"]}d': f'{TIME_PERIODS["short_term"]}日动量Z值'
 }
 
 
@@ -70,34 +71,44 @@ def fetch_data_robust(tickers, period="2y"):
     print(f"\n数据准备完成。成功合并 {len(combined_df.columns)} 个资产的数据。")
     return combined_df
 
-def calculate_professional_momentum_score(price_data, benchmark_price):
+# [修改] 移除了 benchmark_price 参数，改为计算绝对动量
+def calculate_professional_momentum_score(price_data):
     results = []
     reversed_macro_map = {v: k for k, v in GLOBAL_MACRO_ASSETS.items()}
+    
     for ticker in price_data.columns:
-        if ticker == benchmark_price.name: continue
         etf_price = price_data[ticker]
-        aligned_benchmark_price = benchmark_price.reindex(etf_price.index).ffill()
-        relative_price = (etf_price / aligned_benchmark_price).dropna()
-        if len(relative_price) < max(TIME_PERIODS.values()): continue
+        
+        # [核心修改] 直接使用绝对价格，不再除以基准
+        # relative_price = (etf_price / aligned_benchmark_price).dropna()
+        analysis_price = etf_price.dropna()
+        
+        if len(analysis_price) < max(TIME_PERIODS.values()): continue
+        
         metrics = {'Ticker': ticker}
         weighted_z_score_sum = 0
+        
         for term, period_days in TIME_PERIODS.items():
-            if len(relative_price) >= period_days:
-                rs_returns = (relative_price / relative_price.shift(period_days)) - 1
+            if len(analysis_price) >= period_days:
+                # 计算绝对收益率
+                rs_returns = (analysis_price / analysis_price.shift(period_days)) - 1
                 mean, std = rs_returns.mean(), rs_returns.std()
                 if std > 0:
                     z_score = (rs_returns.iloc[-1] - mean) / std
                     metrics[f'z_score_rs_{period_days}d'] = z_score
                     weighted_z_score_sum += z_score * PERIOD_WEIGHTS[term]
                 else: weighted_z_score_sum = np.nan
+        
         if np.isnan(weighted_z_score_sum): continue
         metrics['weighted_z_score_rs'] = weighted_z_score_sum
+        
         lookback_vol = TIME_PERIODS['long_term']
         if len(etf_price) >= lookback_vol:
             annualized_volatility = etf_price.pct_change().dropna().tail(lookback_vol).std() * np.sqrt(252)
             metrics['master_score'] = weighted_z_score_sum / annualized_volatility if annualized_volatility > 0 else 0
         else: continue
         results.append(metrics)
+        
     if not results: return pd.DataFrame()
     df = pd.DataFrame(results).dropna().set_index('Ticker')
     df.rename(index=reversed_macro_map, inplace=True)
@@ -118,6 +129,9 @@ def generate_market_sentiment_module(all_scores_df):
     vix_z = get_z('VIX恐慌指数')
     spx_z = get_z('标普500指数')
     copper_z = get_z('铜')
+    # 对于货币，即使是绝对动量，逻辑方向依然适用：
+    # EURUSD 绝对上涨 -> 美元弱 -> 对 Risk On 有利 (通常)
+    # USDJPY 绝对上涨 -> 美元强 -> 避险或美债收益率高
     strong_usd_map = {"USDJPY=X": 1, "USDCHF=X": 1, "USDCAD=X": 1, "EURUSD=X": -1, "GBPUSD=X": -1, "AUDUSD=X": -1}
     usd_strength_z = sum(get_z(asset) * direction for asset, direction in strong_usd_map.items() if asset in all_scores_df.index) / len(strong_usd_map)
     
@@ -150,7 +164,7 @@ def generate_market_sentiment_module(all_scores_df):
     return html
 
 def generate_deep_dive_analysis_html(all_scores_df, correlation_matrix):
-    title = "综合评估 (智能分析)"
+    title = "综合评估 (智能分析 - 绝对动量版)"
     html = f"<h2>{title}</h2>"
     
     def get_scores(asset_name, df):
@@ -164,7 +178,6 @@ def generate_deep_dive_analysis_html(all_scores_df, correlation_matrix):
             
     html += "<h3>1. 动量加速度分析：谁在加速？谁在急刹车？</h3>"
     html += "<p>通过计算“短期动能 (5日)”与“中期动能 (20日)”的差值，我们发现了市场上最拥挤交易的松动。</p>"
-    # [注意] 加速度在主函数已经计算，这里直接用
     accelerating = all_scores_df[all_scores_df['acceleration'] > 0.5].sort_values('acceleration', ascending=False)
     decelerating = all_scores_df[all_scores_df['acceleration'] < -0.5].sort_values('acceleration', ascending=True)
 
@@ -278,7 +291,7 @@ def generate_deep_dive_analysis_html(all_scores_df, correlation_matrix):
     html += "<h4>横向对比 (此刻谁最强/最弱)</h4>"
     top3 = all_scores_df.sort_values('master_score', ascending=False).head(3)
     bottom3 = all_scores_df.sort_values('master_score', ascending=True).head(3)
-    html += f"<p>“大师分”衡量了资产经波动率调整后的相对动量。此刻，<b>全市场表现最强的资产是 {top3.index[0]} ({top3.iloc[0]['master_score']:.2f})</b>，其次是 {top3.index[1]} 和 {top3.index[2]}。<b>表现最弱的是 {bottom3.index[0]} ({bottom3.iloc[0]['master_score']:.2f})</b>。</p>"
+    html += f"<p>“大师分”衡量了资产经波动率调整后的<b>绝对动量</b>。此刻，<b>全市场表现最强的资产是 {top3.index[0]} ({top3.iloc[0]['master_score']:.2f})</b>，其次是 {top3.index[1]} 和 {top3.index[2]}。<b>表现最弱的是 {bottom3.index[0]} ({bottom3.iloc[0]['master_score']:.2f})</b>。</p>"
     html += "<h4>纵向对比 (谁在变好/变坏)</h4>"
     biggest_improver = accelerating.head(1)
     biggest_worsener = decelerating.head(1)
@@ -320,7 +333,6 @@ def generate_html_table(df, title):
     return f"<h2>{title}</h2>\n{html}"
 
 def create_html_report(all_html_sections, filename="wh.html"):
-
     css_style = """<style>
         body{font-family:"Microsoft YaHei","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;margin:0;padding:2rem;background-color:#f8f9fa;color:#212529}
         h1,h2{color:#343a40;border-bottom:2px solid #dee2e6;padding-bottom:.5rem;margin-top:2rem}
@@ -341,12 +353,12 @@ def create_html_report(all_html_sections, filename="wh.html"):
         li{line-height:1.8}
     </style>"""
     html_template = f"""
-    <!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>全球宏观分析报告 v8.6</title>{css_style}</head>
+    <!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>全球宏观分析报告 v8.7 (绝对动量版)</title>{css_style}</head>
     <body><div class="container">
-        <h1>全球宏观交易决策看板 (v8.6 加速度增强版)</h1>
+        <h1>全球宏观交易决策看板 (v8.7 绝对动量版)</h1>
         <p class="timestamp">报告生成时间: {datetime.now().strftime('%Y年%m月%d日 %H:%M:%S')}</p>
         {''.join(all_html_sections)}
-        <div class="footer"><p>由专业级量化分析框架生成</p></div>
+        <div class="footer"><p>由专业级量化分析框架生成 (Mode: Absolute Momentum)</p></div>
     </div></body></html>"""
     try:
         with open(filename, 'w', encoding='utf-8') as f: f.write(html_template)
@@ -358,30 +370,26 @@ def create_html_report(all_html_sections, filename="wh.html"):
 # 4. 主程序
 # =============================================================================
 if __name__ == '__main__':
-    print("启动全球宏观交易决策看板生成器 (v8.6)...")
-    all_tickers = list(set(ALL_ANALYSIS_ASSETS + [BENCHMARK_TICKER]))
+    print("启动全球宏观交易决策看板生成器 (v8.7 绝对动量版)...")
+    all_tickers = list(set(ALL_ANALYSIS_ASSETS)) # 不再加入 BENCHMARK_TICKER
     price_data = fetch_data_robust(all_tickers, period="2y")
     html_sections = []
     
-    if not price_data.empty and BENCHMARK_TICKER in price_data.columns:
-        benchmark_data = price_data[BENCHMARK_TICKER]
-        analysis_data = price_data.drop(columns=[BENCHMARK_TICKER], errors='ignore')
-        tickers_to_process = [t for t in analysis_data.columns]
+    if not price_data.empty:
+        # [修改] 直接分析所有下载的数据，不需要剥离基准
+        analysis_data = price_data
+        
+        print("\n正在计算所有资产的绝对动量得分...")
+        # [修改] 调用时不传 benchmark
+        full_analysis_df = calculate_professional_momentum_score(analysis_data)
 
-        if not tickers_to_process:
-            print("\n错误：过滤掉基准后，没有可供分析的资产。")
-        else:
-            print("\n正在计算所有资产的动量得分...")
-            full_analysis_df = calculate_professional_momentum_score(analysis_data[tickers_to_process], benchmark_data)
-
-            # [修改 2] 在全局计算动能加速度 (5d - 20d)，确保后续所有表格都能用到
-            if full_analysis_df is not None and not full_analysis_df.empty:
-                st_col = f'z_score_rs_{TIME_PERIODS["short_term"]}d'
-                mt_col = f'z_score_rs_{TIME_PERIODS["mid_term"]}d'
-                if st_col in full_analysis_df.columns and mt_col in full_analysis_df.columns:
-                    full_analysis_df['acceleration'] = full_analysis_df[st_col] - full_analysis_df[mt_col]
-                else:
-                    full_analysis_df['acceleration'] = 0
+        if full_analysis_df is not None and not full_analysis_df.empty:
+            st_col = f'z_score_rs_{TIME_PERIODS["short_term"]}d'
+            mt_col = f'z_score_rs_{TIME_PERIODS["mid_term"]}d'
+            if st_col in full_analysis_df.columns and mt_col in full_analysis_df.columns:
+                full_analysis_df['acceleration'] = full_analysis_df[st_col] - full_analysis_df[mt_col]
+            else:
+                full_analysis_df['acceleration'] = 0
 
             print("\n正在计算资产相关性矩阵...")
             correlation_assets = G10_CURRENCIES + ["USDMXN=X", "ES=F", "^TNX", "CL=F", "GC=F", "^VIX"]
@@ -394,28 +402,26 @@ if __name__ == '__main__':
                     reversed_macro_map = {v: k for k, v in GLOBAL_MACRO_ASSETS.items()}
                     correlation_matrix.rename(index=reversed_macro_map, columns=reversed_macro_map, inplace=True)
 
-            if full_analysis_df is not None and not full_analysis_df.empty:
-                print("\n正在生成市场情绪指标...")
-                html_sections.append(generate_market_sentiment_module(full_analysis_df))
-                
-                print("\n正在生成深度交易洞察分析...")
-                html_sections.append(generate_deep_dive_analysis_html(full_analysis_df, correlation_matrix))
+            print("\n正在生成市场情绪指标...")
+            html_sections.append(generate_market_sentiment_module(full_analysis_df))
+            
+            print("\n正在生成深度交易洞察分析...")
+            html_sections.append(generate_deep_dive_analysis_html(full_analysis_df, correlation_matrix))
 
             
             print("\n正在生成各资产组的动量排名表...")
-            for group_name, group_tickers in [("G10货币动量排名 (相对美元指数)", G10_CURRENCIES), 
-                                               ("新兴市场货币动量排名 (相对美元指数)", EM_CURRENCIES), 
-                                               ("全球宏观资产动量排名 (相对美元指数)", list(GLOBAL_MACRO_ASSETS.keys()))]:
+            # [修改] 标题移除了 (相对美元指数)，改为 (绝对动量)
+            for group_name, group_tickers in [("G10货币动量排名 (绝对动量)", G10_CURRENCIES), 
+                                               ("新兴市场货币动量排名 (绝对动量)", EM_CURRENCIES), 
+                                               ("全球宏观资产动量排名 (绝对动量)", list(GLOBAL_MACRO_ASSETS.keys()))]:
                 
                 target_asset_names = group_tickers
                 group_results = full_analysis_df.loc[full_analysis_df.index.isin(target_asset_names)]
 
                 if not group_results.empty:
-                    # [修改 3] 不再 drop 加速度列
                     display_df = group_results.copy() 
                     sorted_results = display_df.sort_values('master_score', ascending=False)
                     
-                    # 定义展示列 (把加速度放进去)
                     z_score_cols = [f'z_score_rs_{p}d' for p in sorted(TIME_PERIODS.values(), reverse=True)]
                     display_cols = ['master_score', 'weighted_z_score_rs'] + z_score_cols + ['acceleration']
                     
@@ -429,4 +435,3 @@ if __name__ == '__main__':
     else:
         print("\n未能下载分析所需的核心数据，无法生成报告。")
     print("\n分析完成。")
-
